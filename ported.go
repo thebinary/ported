@@ -16,6 +16,7 @@ import (
 //ServiceResponse is the response object for service requests
 type ServiceResponse struct {
 	MainURL       string
+	Service       string
 	AccesibleURLs []string
 }
 
@@ -121,7 +122,6 @@ func (p *Ported) Start() (err error) {
 	// Call porter to create service
 	formData := url.Values{
 		"username":  []string{p.Username},
-		"service":   []string{p.ServiceName},
 		"localAddr": []string{p.RemoteAddr}, // for porter server localAddr is client's remoteAddr
 	}
 	resp, err := http.PostForm(p.Porter+"/v1/service", formData)
@@ -133,6 +133,7 @@ func (p *Ported) Start() (err error) {
 	service := &ServiceResponse{}
 	json.NewDecoder(resp.Body).Decode(service)
 	log.Printf("\n\nYour Service is available at:\n" + service.MainURL + "\n\n")
+	p.ServiceName = service.Service
 
 	// keep running keepAlive request in background
 	go p.keepAlive()

@@ -28,7 +28,7 @@ func init() {
 	defKeyFile := path.Join(cuUser.HomeDir, "/.ssh/id_rsa")
 
 	flag.StringVar(&porter, "using", "http://localhost:8888", "porter server address; API endpoint address")
-	flag.StringVar(&serviceName, "as", "myapp", "service name")
+	flag.StringVar(&serviceName, "as", "", "service name; defaults to what is given by porter server")
 	flag.StringVar(&tunnelAddr, "via", "", "porter tunnel endpoint adddress; SSH address; defaults to 'using_host:22'")
 	flag.StringVar(&localAddr, "to", "127.0.0.1:8080", "local listener adddress; local service listening address")
 	flag.StringVar(&userName, "with-user", cuUser.Username, "username to use for porter")

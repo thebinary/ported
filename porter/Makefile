@@ -1,4 +1,4 @@
-SRCS 		= porter.go redis.go handlers.go
+SRCS 		= porter.go redis.go handlers.go helpers.go
 LDFLAGS 	= -s -w
 
 all: ../build/porter-linux_amd64 ../build/porter-darwin
