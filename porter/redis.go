@@ -21,7 +21,7 @@ func keysForServiceName(serviceName string) (routerKey, serviceKey, loadBalancer
 
 func createPortedService(ctx *context.Context, red *redis.Client, serviceName, addr string) (serviceURL string, err error) {
 	//TODO: handle errors
-	serviceURL = "http://" + serviceName + "." + rootDomain
+	serviceURL = "https://" + serviceName + "." + rootDomain
 	routerKey, serviceKey, loadBalancerKey := keysForServiceName(serviceName)
 	log.Println("[KEY]", red.Set(*ctx, loadBalancerKey+"/servers/0/url", addr, keepAliveTimeout+time.Second*2))
 	log.Println("[KEY]", red.Set(*ctx, serviceKey, serviceName, keepAliveTimeout+time.Second*4))
