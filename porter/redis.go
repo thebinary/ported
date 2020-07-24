@@ -35,6 +35,6 @@ func updateKeepAlive(ctx *context.Context, red *redis.Client, serviceName string
 
 	log.Println("[KEY]", red.Expire(*ctx, loadBalancerKey, keepAliveTimeout+time.Second*2))
 	log.Println("[KEY]", red.Expire(*ctx, serviceKey, keepAliveTimeout+time.Second*4))
-	log.Println("[KEY]", red.Expire(*ctx, routerKey, keepAliveTimeout))
+	log.Println("[KEY]", red.Expire(*ctx, routerKey+"/rule", keepAliveTimeout))
 	return nil
 }
