@@ -1,10 +1,10 @@
 # ported
-Ported - Self Hosted HTTP Tunnel for in-house devs
+Ported - Self Hosted HTTP Tunnel for in-house devs  \
 An open source self-hosted (in-house) alternative to ngrok
 
 ## Server Side
 ### Porter service
-This is responsible for configuring services in the external gateway server (which will tunnel to your developers local services)
+This is responsible for configuring services in the external gateway server (which will tunnel to the developers local services)
 ```sh
 ./porter -rootDomain ported.mydomain.com
 ```
