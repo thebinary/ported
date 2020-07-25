@@ -7,6 +7,8 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/httptest"
+	"net/http/httputil"
 	"net/url"
 	"time"
 
@@ -99,8 +101,23 @@ func (p *Ported) getRemoteAddr() {
 
 // Start Ported connection
 func (p *Ported) Start() (err error) {
+	// Setup local inspector proxy
+	log.Printf("==> Starging local inspector proxy")
+	localURL, _ := url.Parse("http://" + p.LocalAddr)
+	proxy := httputil.NewSingleHostReverseProxy(localURL)
+	inspector := httptest.NewServer(proxy)
+	inspectorURL, _ := url.Parse(inspector.URL)
+	inspectorAddr := inspectorURL.Host
+
+	inspectTransport := DefaultInspectTransport
+	inspectTransport.RequestHeaders = logReqHeader
+	inspectTransport.ResponseHeaders = logRespHeader
+	inspectTransport.ResponseBody = logRespBody
+	proxy.Transport = inspectTransport
+	go inspector.Config.ListenAndServe()
+
 	p.getRemoteAddr()
-	log.Printf("==> Starting Tunnel: %s|%s -> %s", p.ServerAddr, p.RemoteAddr, p.LocalAddr)
+	log.Printf("==> Starting Tunnel: %s|%s -> %s|%s", p.ServerAddr, p.RemoteAddr, inspectorAddr, p.LocalAddr)
 	client, err := ssh.Dial("tcp", p.ServerAddr, p.clientConfig)
 	if err != nil {
 		nerr := fmt.Errorf("tunnel connect error: %v", err)
@@ -143,7 +160,7 @@ func (p *Ported) Start() (err error) {
 
 	// start communication loop
 	for {
-		local, err := net.Dial("tcp", p.LocalAddr)
+		local, err := net.Dial("tcp", inspectorAddr)
 		if err != nil {
 			listener.Close()
 			nerr := fmt.Errorf("error connecting to local address '%s': %v", p.LocalAddr, err)

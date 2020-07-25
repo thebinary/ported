@@ -18,6 +18,9 @@ var userName string
 var keyFile string
 var remoteAddr string
 var serviceName string
+var logReqHeader bool
+var logRespHeader bool
+var logRespBody bool
 
 func init() {
 	// get current system user info
@@ -35,7 +38,9 @@ func init() {
 	flag.StringVar(&keyFile, "with-key", defKeyFile, "private key to use for porter")
 	//TODO: this remoteAddr should be handled by porter
 	flag.StringVar(&remoteAddr, "at", "127.0.0.1:8080", "listener addr at the porter tunnel endpoint")
-
+	flag.BoolVar(&logReqHeader, "log.request.header", false, "log request headers")
+	flag.BoolVar(&logRespHeader, "log.response.header", false, "log response headers")
+	flag.BoolVar(&logRespBody, "log.response.body", false, "log request body")
 	flag.Parse()
 
 	// extract default tunnelAddr from porter url

@@ -1,5 +1,5 @@
 MAKE		= make
-SRCS 		= main.go middleman.go ported.go
+SRCS 		= main.go middleman.go ported.go inspector.go
 LDFLAGS 	= -s -w
 
 all: build/ported-linux_amd64 build/ported-darwin ported_all
