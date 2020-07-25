@@ -2,6 +2,8 @@
 Ported - Self Hosted HTTP Tunnel for in-house devs  \
 An open source self-hosted (in-house) alternative to ngrok
 
+# Currently this project is at POC (Proof-of-Concept) state
+
 ## Server Side
 ### Porter service
 This is responsible for creating external side of the tunnel (other side being the developers machine). It also configures services in the external gateway server to expose the tunnel to an accessible endpoint.
