@@ -124,6 +124,9 @@ func (p *Ported) Start() (err error) {
 		"username":  []string{p.Username},
 		"localAddr": []string{p.RemoteAddr}, // for porter server localAddr is client's remoteAddr
 	}
+	if serviceName != "" {
+		formData.Add("service", serviceName)
+	}
 	resp, err := http.PostForm(p.Porter+"/v1/service", formData)
 	if err != nil {
 		nerr := fmt.Errorf("error requesting service: %v", err)
