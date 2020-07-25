@@ -5,7 +5,7 @@ all: ../build/porter-linux_amd64 ../build/porter-darwin
 ../build/porter-linux_amd64: ${SRCS}
 	GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $@ ${SRCS}
 	upx $@
-../build/porter-darwin:
+../build/porter-darwin: ${SRCS}
 	GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $@ ${SRCS}
 	upx $@
 

@@ -7,7 +7,7 @@ all: build/ported-linux_amd64 build/ported-darwin ported_all
 build/ported-linux_amd64: ${SRCS}
 	GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $@ ${SRCS}
 	upx $@
-build/ported-darwin:
+build/ported-darwin: ${SRCS}
 	GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $@ ${SRCS}
 	upx $@
 
