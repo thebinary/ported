@@ -13,15 +13,19 @@ import (
 )
 
 type webLog struct {
-	Timestamp             int64  `json:"t"`
-	ResponseTime          string `json:"rtt"`
-	Method                string `json:"m"`
-	Path                  string `json:"p"`
-	HTTPVersion           string `json:"h"`
-	StatusCode            int    `json:"c"`
-	Referer               string `json:"r"`
-	ResponseContentLength int64  `json:"rpl"`
-	UserAgent             string `json:"u"`
+	Timestamp             int64               `json:"t"`
+	ResponseTime          string              `json:"rtt"`
+	Method                string              `json:"m"`
+	Path                  string              `json:"p"`
+	HTTPVersion           string              `json:"h"`
+	StatusCode            int                 `json:"c"`
+	Status                string              `json:"s"`
+	Referer               string              `json:"r"`
+	ResponseContentLength int64               `json:"rpl"`
+	UserAgent             string              `json:"u"`
+	RequestHeaders        map[string][]string `json:"rh"`
+	ResponseHeaders       map[string][]string `json:"rph"`
+	RemoteIP              string              `json:"ip"`
 }
 
 func WebSocketHandlerWithMessageChannel(msg chan webLog) func(http.ResponseWriter, *http.Request) {
