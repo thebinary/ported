@@ -1,3 +1,4 @@
 /build/
 /dist/
+/web-inspector-fs.go
 /.goreleaser.env
