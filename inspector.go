@@ -38,9 +38,16 @@ func (i *InspectTransport) RoundTrip(request *http.Request) (response *http.Resp
 	response, err = http.DefaultTransport.RoundTrip(request)
 	elapsed := time.Since(start)
 
+	var remoteIP string
+	if r := request.Header.Get("X-Real-Ip"); r != "" {
+		remoteIP = r
+	} else {
+		remoteIP = request.RemoteAddr
+	}
 	// default loggin
-	// eg: 2020/07/25 18:30:26 4.046181ms   GET "/test" HTTP/1.1 200 839 "" "curl/7.54.0"
-	accessLog := fmt.Sprintf("%-12s %s \"%s\" HTTP/%d.%d %d %d \"%s\" \"%s\"", elapsed,
+	// eg: 2020/07/25 18:30:26 1.1.1.1 4.046181ms   GET "/test" HTTP/1.1 200 839 "" "curl/7.54.0"
+	accessLog := fmt.Sprintf("%s %-12s %s \"%s\" HTTP/%d.%d %d %d \"%s\" \"%s\"",
+		remoteIP, elapsed,
 		request.Method, request.URL.Path, request.ProtoMajor, request.ProtoMinor,
 		response.StatusCode, response.ContentLength,
 		request.Referer(), request.UserAgent())
