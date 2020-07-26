@@ -13,6 +13,7 @@ type InspectTransport struct {
 	RequestHeaders  bool
 	ResponseHeaders bool
 	ResponseBody    bool
+	WebChannel      chan webLog
 }
 
 //DefaultInspectTransport is the default inspect transport instance initialized by init
@@ -39,10 +40,27 @@ func (i *InspectTransport) RoundTrip(request *http.Request) (response *http.Resp
 
 	// default loggin
 	// eg: 2020/07/25 18:30:26 4.046181ms   GET "/test" HTTP/1.1 200 839 "" "curl/7.54.0"
-	log.Printf("%-12s %s \"%s\" HTTP/%d.%d %d %d \"%s\" \"%s\"", elapsed,
+	accessLog := fmt.Sprintf("%-12s %s \"%s\" HTTP/%d.%d %d %d \"%s\" \"%s\"", elapsed,
 		request.Method, request.URL.Path, request.ProtoMajor, request.ProtoMinor,
 		response.StatusCode, response.ContentLength,
 		request.Referer(), request.UserAgent())
+	log.Println(accessLog)
+
+	if i.WebChannel != nil {
+		go func() {
+			i.WebChannel <- webLog{
+				Timestamp:             time.Now().Unix(),
+				ResponseTime:          elapsed.String(),
+				Method:                request.Method,
+				Path:                  request.URL.Path,
+				HTTPVersion:           fmt.Sprintf("%d.%d", request.ProtoMajor, request.ProtoMinor),
+				StatusCode:            response.StatusCode,
+				ResponseContentLength: response.ContentLength,
+				Referer:               request.Referer(),
+				UserAgent:             request.UserAgent(),
+			}
+		}()
+	}
 
 	if i.RequestHeaders {
 		if req, err := httputil.DumpRequestOut(request, false); err == nil {

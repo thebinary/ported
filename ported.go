@@ -105,16 +105,23 @@ func (p *Ported) Start() (err error) {
 	log.Printf("==> Starging local inspector proxy")
 	localURL, _ := url.Parse("http://" + p.LocalAddr)
 	proxy := httputil.NewSingleHostReverseProxy(localURL)
-	inspector := httptest.NewServer(proxy)
-	inspectorURL, _ := url.Parse(inspector.URL)
-	inspectorAddr := inspectorURL.Host
 
+	msg := make(chan webLog)
 	inspectTransport := DefaultInspectTransport
 	inspectTransport.RequestHeaders = logReqHeader
 	inspectTransport.ResponseHeaders = logRespHeader
 	inspectTransport.ResponseBody = logRespBody
+	inspectTransport.WebChannel = msg
 	proxy.Transport = inspectTransport
-	go inspector.Config.ListenAndServe()
+
+	//TODO: proper way to use dynamic port
+	tmpsrv := httptest.NewServer(http.NotFoundHandler())
+	dynURL, _ := url.Parse(tmpsrv.URL)
+	inspectorAddr := dynURL.Host
+	time.Sleep(time.Second)
+	tmpsrv.Close()
+	inspector := NewWebInspector(msg, proxy)
+	go http.ListenAndServe(inspectorAddr, inspector)
 
 	p.getRemoteAddr()
 	log.Printf("==> Starting Tunnel: %s|%s -> %s|%s", p.ServerAddr, p.RemoteAddr, inspectorAddr, p.LocalAddr)
@@ -152,11 +159,12 @@ func (p *Ported) Start() (err error) {
 	}
 	service := &ServiceResponse{}
 	json.NewDecoder(resp.Body).Decode(service)
-	log.Printf("\n\nYour Service is available at:\n" + service.MainURL + "\n\n")
+	fmt.Println("\n\nYour Service is available at:\n" + service.MainURL)
 	p.ServiceName = service.Service
-
+	fmt.Printf("\nAnd the web inspector is available at:\n%s\n", "http://"+inspectorAddr+"/porter/inspector")
 	// keep running keepAlive request in background
 	go p.keepAlive()
+	fmt.Printf("\n\n======= Logs will appear below ========\n")
 
 	// start communication loop
 	for {

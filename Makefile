@@ -1,8 +1,10 @@
 MAKE		= make
-SRCS 		= main.go middleman.go ported.go inspector.go
+SRCS 		= main.go middleman.go ported.go inspector.go web-inspector.go
 LDFLAGS 	= -s -w
 
 all: build/ported-linux_amd64 build/ported-darwin ported_all
+
+test-builds:
 
 build/ported-linux_amd64: ${SRCS}
 	GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $@ ${SRCS}
