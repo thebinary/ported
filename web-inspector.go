@@ -1,3 +1,4 @@
+//go:generate go-bindata -fs -prefix "inspector/dist/" -o web-inspector-fs.go inspector/dist/...
 package main
 
 import (
@@ -54,6 +55,7 @@ func NewWebInspector(ch chan webLog, proxy *httputil.ReverseProxy) (inspectorWeb
 	inspectorWeb = http.NewServeMux()
 	inspectorWeb.Handle("/", proxy)
 	inspectorWeb.HandleFunc("/porter/stream", WebSocketHandlerWithMessageChannel(ch))
-	inspectorWeb.Handle("/porter/inspector/", http.StripPrefix("/porter/inspector", http.FileServer(http.Dir("./inspector/dist"))))
+	webDir := AssetFile()
+	inspectorWeb.Handle("/porter/inspector/", http.StripPrefix("/porter/inspector", http.FileServer(webDir)))
 	return inspectorWeb
 }
