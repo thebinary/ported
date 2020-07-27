@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/thebinary/ported/flow/httpflow"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -106,7 +107,7 @@ func (p *Ported) Start() (err error) {
 	localURL, _ := url.Parse("http://" + p.LocalAddr)
 	proxy := httputil.NewSingleHostReverseProxy(localURL)
 
-	msg := make(chan webLog)
+	msg := make(chan httpflow.HTTPFlow)
 	inspectTransport := DefaultInspectTransport
 	inspectTransport.RequestHeaders = logReqHeader
 	inspectTransport.ResponseHeaders = logRespHeader
