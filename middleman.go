@@ -9,8 +9,8 @@ import (
 
 // https://sosedoff.com/2015/05/25/ssh-port-forwarding-with-go.html
 func handleClient(client net.Conn, remote net.Conn) {
-	defer client.Close()
-	chDone := make(chan bool)
+	//defer client.Close()
+	//chDone := make(chan bool)
 
 	// Start remote -> local data transfer
 	go func() {
@@ -18,7 +18,7 @@ func handleClient(client net.Conn, remote net.Conn) {
 		if err != nil {
 			log.Println(fmt.Sprintf("error while copy remote->local: %s", err))
 		}
-		chDone <- true
+		//chDone <- true
 	}()
 
 	// Start local -> remote data transfer
@@ -27,8 +27,7 @@ func handleClient(client net.Conn, remote net.Conn) {
 		if err != nil {
 			log.Println(fmt.Sprintf("error while copy local->remote: %s", err))
 		}
-		chDone <- true
+		//chDone <- true
 	}()
-
-	<-chDone
+	//<-chDone
 }
