@@ -31,9 +31,7 @@ func currentUserAndKey() (username, key string, err error) {
 }
 
 func parseTCPAddr(addr string) (tcpAddr *net.TCPAddr, err error) {
-	if host, port, err := net.SplitHostPort(addr); err != nil {
-		return nil, err
-	} else {
+	if host, port, err := net.SplitHostPort(addr); err == nil {
 		portInt, _ := strconv.Atoi(port)
 		parsedIP := net.ParseIP(host)
 		if parsedIP == nil {
