@@ -1,4 +1,4 @@
-//go:generate go-bindata -fs -prefix "inspector/dist/" -o web-inspector-fs.go inspector/dist/...
+//go:generate go-bindata -fs -prefix "inspector-ui/dist/" -o web-inspector-fs.go inspector-ui/dist/...
 package main
 
 import (
@@ -8,27 +8,12 @@ import (
 	"net/http"
 	"net/http/httputil"
 
+	"github.com/thebinary/ported/flow/httpflow"
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
 )
 
-type webLog struct {
-	Timestamp             int64               `json:"t"`
-	ResponseTime          string              `json:"rtt"`
-	Method                string              `json:"m"`
-	Path                  string              `json:"p"`
-	HTTPVersion           string              `json:"h"`
-	StatusCode            int                 `json:"c"`
-	Status                string              `json:"s"`
-	Referer               string              `json:"r"`
-	ResponseContentLength int64               `json:"rpl"`
-	UserAgent             string              `json:"u"`
-	RequestHeaders        map[string][]string `json:"rh"`
-	ResponseHeaders       map[string][]string `json:"rph"`
-	RemoteIP              string              `json:"ip"`
-}
-
-func WebSocketHandlerWithMessageChannel(msg chan webLog) func(http.ResponseWriter, *http.Request) {
+func WebSocketHandlerWithMessageChannel(msg chan httpflow.HTTPFlow) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 			OriginPatterns: []string{"localhost:8081"},
@@ -55,7 +40,7 @@ func WebSocketHandlerWithMessageChannel(msg chan webLog) func(http.ResponseWrite
 	}
 }
 
-func NewWebInspector(ch chan webLog, proxy *httputil.ReverseProxy) (inspectorWeb *http.ServeMux) {
+func NewWebInspector(ch chan httpflow.HTTPFlow, proxy *httputil.ReverseProxy) (inspectorWeb *http.ServeMux) {
 	inspectorWeb = http.NewServeMux()
 	inspectorWeb.Handle("/", proxy)
 	inspectorWeb.HandleFunc("/porter/stream", WebSocketHandlerWithMessageChannel(ch))
