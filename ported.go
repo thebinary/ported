@@ -7,12 +7,11 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"net/http/httptest"
-	"net/http/httputil"
 	"net/url"
 	"time"
 
-	"github.com/thebinary/ported/flow/httpflow"
+	"github.com/thebinary/ported/iproxy"
+	"github.com/thebinary/ported/tunnel"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -25,16 +24,17 @@ type ServiceResponse struct {
 
 // Ported describes an instance of a Ported
 type Ported struct {
-	Porter       string
-	ServiceName  string
-	ServerAddr   string
-	Username     string
-	RemoteAddr   string
-	LocalAddr    string
-	Timeout      time.Duration
-	clientConfig *ssh.ClientConfig
-	client       *ssh.Client
-	listenter    net.Listener
+	Porter        string
+	ServiceName   string
+	ServerAddr    string
+	Username      string
+	RemoteAddr    string
+	LocalAddr     string
+	Timeout       time.Duration
+	clientConfig  *ssh.ClientConfig
+	client        *ssh.Client
+	tunnel        tunnel.Tunneler
+	inspectorAddr string
 }
 
 // NewPorted returns a NewPorted Config object
@@ -66,6 +66,7 @@ func NewPorted(porter, serviceName, serverAddr, username, keyFile, remoteAddr, l
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         p.Timeout,
 	}
+
 	return p, nil
 }
 
@@ -100,31 +101,27 @@ func (p *Ported) getRemoteAddr() {
 	p.RemoteAddr = string(addr)
 }
 
+func (p *Ported) getTunnel() (err error) {
+	remote, _ := net.ResolveTCPAddr("tcp", p.RemoteAddr)
+	local, _ := net.ResolveTCPAddr("tcp", p.inspectorAddr)
+	p.tunnel, err = tunnel.NewReverseSSH(p.client, remote, local)
+	return err
+}
+
 // Start Ported connection
 func (p *Ported) Start() (err error) {
 	// Setup local inspector proxy
 	log.Printf("==> Starging local inspector proxy")
 	localURL, _ := url.Parse("http://" + p.LocalAddr)
-	proxy := httputil.NewSingleHostReverseProxy(localURL)
-
-	msg := make(chan httpflow.HTTPFlow)
-	inspectTransport := DefaultInspectTransport
-	inspectTransport.RequestHeaders = logReqHeader
-	inspectTransport.ResponseHeaders = logRespHeader
-	inspectTransport.ResponseBody = logRespBody
-	inspectTransport.WebChannel = msg
-	proxy.Transport = inspectTransport
-
-	//TODO: proper way to use dynamic port
-	tmpsrv := httptest.NewServer(http.NotFoundHandler())
-	dynURL, _ := url.Parse(tmpsrv.URL)
-	inspectorAddr := dynURL.Host
-	time.Sleep(time.Second)
-	tmpsrv.Close()
-	inspector := NewWebInspector(msg, proxy)
+	inspectorAddr, inspector, err := iproxy.WebInspectorMux(localURL, logReqHeader, logRespHeader, logRespBody)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	p.inspectorAddr = inspectorAddr
 	go http.ListenAndServe(inspectorAddr, inspector)
 
 	p.getRemoteAddr()
+
 	log.Printf("==> Starting Tunnel: %s|%s -> %s|%s", p.ServerAddr, p.RemoteAddr, inspectorAddr, p.LocalAddr)
 	client, err := ssh.Dial("tcp", p.ServerAddr, p.clientConfig)
 	if err != nil {
@@ -134,15 +131,8 @@ func (p *Ported) Start() (err error) {
 	}
 	p.client = client
 
-	listener, err := client.Listen("tcp", p.RemoteAddr)
-	if err != nil {
-		client.Close()
-		nerr := fmt.Errorf("error listening on '%s' on tunnel server: %v", p.RemoteAddr, err)
-		log.Println(nerr)
-		return nerr
-	}
-	p.listenter = listener
-	log.Printf("sucessfully listening on tunnel server '%s' at %s", p.ServerAddr, p.RemoteAddr)
+	p.getTunnel()
+	//log.Printf("sucessfully listening on tunnel server '%s' at %s", p.ServerAddr, p.RemoteAddr)
 
 	// Call porter to create service
 	formData := url.Values{
@@ -168,22 +158,10 @@ func (p *Ported) Start() (err error) {
 	fmt.Printf("\n\n======= Logs will appear below ========\n")
 
 	// start communication loop
-	for {
-		local, err := net.Dial("tcp", inspectorAddr)
-		if err != nil {
-			listener.Close()
-			nerr := fmt.Errorf("error connecting to local address '%s': %v", p.LocalAddr, err)
-			log.Println(nerr)
-			return nerr
-		}
+	p.tunnel.Connect()
 
-		client, err := listener.Accept()
-		if err != nil {
-			log.Printf("error accepting client")
-		}
-		//log.Printf("client connection: %s|%s -> %s", p.ServerAddr, client.RemoteAddr().String(), client.LocalAddr().String())
-		handleClient(client, local)
-	}
+	p.Close()
+	return
 }
 
 // Close Ported Connections
@@ -194,8 +172,8 @@ func (p *Ported) Close() {
 		p.client.Conn.Close()
 	}
 	log.Println("===> Closing ported remote listeners...")
-	if p.listenter != nil {
-		p.listenter.Close()
+	if p.tunnel != nil {
+		p.tunnel.Close()
 	}
 	log.Println("==> ported successfully shutdown.")
 }
