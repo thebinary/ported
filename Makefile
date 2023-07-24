@@ -6,6 +6,7 @@ LDFLAGS 	= -s -w
 all: build/ported-linux_amd64 build/ported-darwin ported_all
 
 ${GEN_SRCS}:
+	make -p inspector-ui/dist
 	go generate .
 
 build/ported-linux_amd64: ${SRCS} ${GEN_SRCS}
@@ -25,6 +26,9 @@ install: ${SRCS} ${GEN_SRCS}
 	go install
 
 clean:
+	@echo "Removing inspector-ui dist..."
+	rm -rf inspector-ui/dist
+	@echo ""
 	@echo "Removing ported binaries..."
 	rm -f build/ported-*
 	@echo ""
