@@ -13,7 +13,6 @@ build/ported-linux_amd64: ${SRCS} ${GEN_SRCS}
 	upx $@
 build/ported-darwin: ${SRCS} ${GEN_SRCS}
 	GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $@ ${SRCS} ${GEN_SRCS}
-	upx $@
 
 ported_all:
 	cd ./porter; $(MAKE) all
